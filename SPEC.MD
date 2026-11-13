@@ -78,8 +78,9 @@ wyxan/
 │     └─ next.config.ts
 └─ packages/
    └─ shared/                 # types + pure logic, no runtime deps
-      ├─ src/address.ts       # normaliseAddress(), isInWeb()
+      ├─ src/address.ts       # normaliseAddress(), isInWeb(), resolveKind()
       ├─ src/history.ts       # history state machine (pure)
+      ├─ src/search.ts        # html→text, searchText derivation, snippets
       ├─ src/types.ts         # shared DTO shapes
       └─ src/index.ts
 ```
@@ -242,7 +243,7 @@ and the query path a single indexed lookup.
     title: string,
     html: string | null,        // author HTML for kind==='page'
     query: string | null,       // for kind==='search'
-    resultAddresses: string[] | null,
+    resultAddresses: string[],  // the addresses a search matched; empty otherwise
     errorCode: string | null,   // 'notfound' | 'offweb'
   },
   pruned: boolean,          // true once dropped from the navigable stack
