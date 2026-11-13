@@ -164,6 +164,22 @@ via the workspace name `@wyxan/shared`.
 | `WEB_ORIGIN` | web | `http://localhost:3000` | Origin of the app, for the render iframe |
 | `MAX_HTML_BYTES` | api | `65536` | Publish size limit |
 
+### 1.5 Monorepo build notes
+
+Two things about running Next.js 16 inside an npm workspace, both found the hard way and both
+one-line fixes in `apps/web/next.config.ts`:
+
+1. **`turbopack.root` must point at the workspace root.** npm hoists `next` to the repository
+   root, but Turbopack resolves `next/package.json` relative to the filesystem root it is given,
+   which defaults to the app directory (`apps/web`) — where `next` is not installed. The build
+   fails with `Could not find the Next.js package (next/package.json)`. The fix is
+   `turbopack: { root: path.join(import.meta.dirname, "../..") }`.
+2. **`packages/shared` is consumed as a compiled package.** The API imports
+   `@small-web-browser/shared` by name; that package's `main` points at `dist/`, so the shared
+   package must be built before the API or the web app is. The root scripts chain
+   `build:shared` into `dev:api`, `dev:web`, `build`, `seed` and `test` rather than relying on a
+   `prepare` lifecycle hook, which fires mid-install and fails the whole install.
+
 ---
 
 ## 2. Data model
