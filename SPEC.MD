@@ -340,6 +340,9 @@ will happen) and the server (which is authoritative).
 2. Reject if it contains whitespace or control characters.
 3. If it parses as an absolute URL:
      take scheme-stripped host + path; drop query, fragment, credentials, port.
+     If the host is the *app's own* host (`localhost`, or an IP literal), the
+     address is the path rather than the host — pasting the page's own URL
+     back into the address bar returns the address it was showing.
    Else split on the first "/" → host + path.
 4. Lowercase the whole result (the web is case-insensitive).
 5. If the host has no dot, append the web root: host + ".zz".
@@ -365,6 +368,19 @@ will happen) and the server (which is authoritative).
 | `http://example.com/x` | `example.com/x` | offweb |
 | `` / `   ` | — | invalid (rejected inline, no navigation, no Visit) |
 | `tide pool` | — | invalid |
+
+**The Kind column is the *resolved* kind, not the syntactic one.** Normalisation and resolution
+are separate steps, because only one of them is a pure function:
+
+- `normalizeAddress(input)` answers *"is this well-formed, what is its canonical spelling, and is
+  it inside the web?"* → `{ ok: true, address, inWeb }` or `{ ok: false, error }`. It never
+  consults the database, so it cannot know that `ghost-reef.zz` has no site behind it.
+- `resolveKind(address, siteExists)` answers *"what did arriving here produce?"* →
+  `'page' | 'notfound' | 'offweb'`. The caller supplies `siteExists` from the lookup.
+
+Keeping them apart is what lets the browser preview a navigation without a round trip, and it is
+why the two failures stay distinct: a well-formed address with no site is `notfound`, an address
+outside `*.zz` is `offweb`, and the brief wants those to be two different pages, not one.
 
 ### 4.3 Addresses with paths
 
