@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { configuration } from './common/config/configuration.js';
 import { HealthModule } from './health/health.module.js';
 import { PeopleModule } from './people/people.module.js';
+import { RenderModule } from './render/render.module.js';
 import { SearchModule } from './search/search.module.js';
 import { SitesModule } from './sites/sites.module.js';
 import { VisitsModule } from './visits/visits.module.js';
@@ -21,6 +22,7 @@ import { HistoryModule } from './history/history.module.js';
     }),
     HealthModule,
     PeopleModule,
+    RenderModule,
     SearchModule,
     SitesModule,
     VisitsModule,
