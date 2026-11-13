@@ -294,16 +294,28 @@ Lives in `packages/shared/src/history.ts`. Pure, synchronous, no I/O. The API se
 wrapper that persists the result.
 
 ```ts
-type Entry = { visitId: string; address: string; title: string; kind: VisitKind; via: VisitVia };
+type HistoryEntry = {
+  visitId: string; address: string; title: string;
+  kind: VisitKind; via: VisitVia; visitedAt: string; pruned: boolean;
+};
 
-type HistoryState = { entries: Entry[]; cursor: number };
+type HistoryState = { entries: HistoryEntry[]; cursor: number };
 
 // All return a NEW state plus a description of what happened.
-push(state, entry):      { state, pruned: Entry[] }   // navigate: truncate forward, append
-back(state):             { state, moved: boolean }   // cursor - 1, clamp at 0
-forward(state):          { state, moved: boolean }   // cursor + 1, clamp at end
-jump(state, index):      { state, pruned: Entry[] }   // cursor = index, truncate forward
+push(state, entry):   { state, pruned: HistoryEntry[] }              // navigate: truncate forward, append
+back(state):          { state, moved: boolean }                      // cursor - 1, clamp at 0
+forward(state):       { state, moved: boolean }                      // cursor + 1, clamp at end
+jump(state, index):   { ok: true, state, pruned } | { ok: false, error }
+
+// And the predicates the toolbar needs, so the client does not re-implement them:
+canGoBack(state): boolean
+canGoForward(state): boolean
+currentEntry(state): HistoryEntry | null
 ```
+
+`jump` is the only one that can refuse: an index outside the stack is a client bug, not an edge
+of the stack, so it returns `{ ok: false }` and the API turns that into a `400` (§5.3). The other
+three clamp.
 
 ### 3.1 Rules
 
@@ -312,7 +324,9 @@ jump(state, index):      { state, pruned: Entry[] }   // cursor = index, truncat
 2. **Clamping, not errors.** `back` at index 0 and `forward` at the end are no-ops returning
    `moved: false`. The UI disables the control; the server does not error.
 3. **Jump truncates forward.** Jumping to index *i* discards entries *i+1…end*. This is real
-   browser behaviour and is required by "forward can be lost".
+   browser behaviour and is required by "forward can be lost". It happens even when *i* is the
+   entry you are already on: choosing an entry from the history list is a navigation, and a
+   navigation discards the forward entries.
 4. **Back and forward do not append.** They move the cursor only. A Visit's `via` and `visitedAt`
    describe the original arrival and never change.
 5. **Repeat visits are allowed.** Navigating to the same address twice creates two Visits and two
