@@ -426,6 +426,13 @@ Errors use NestJS's standard shape: `{ statusCode, message, error }`.
 | POST | `/api/history/jump` | `{ personId, index }` | `200 { visit, state, pruned: [...] }` |
 | GET | `/render/:visitId` | — | `text/html` — the sandboxed document |
 
+`GET /api/history` returns the **log**, not the stack: every arrival the person has ever made,
+in order, each one marked with `pruned` (it has fallen off the stack) and `stackIndex` (where it
+sits in the stack, or `null` if it has fallen off). `jump` takes a **stack** index, so the client
+reads `stackIndex` off the row it wants and sends that. A row with no `stackIndex` is a lost
+entry, and clicking one navigates there again rather than jumping - which is what a real browser
+does with an old history entry.
+
 `state` is the serialised `HistoryState` (entries + cursor) so the client never has to
 reconstruct it.
 
@@ -821,6 +828,7 @@ type VisitVia = 'typed' | 'link' | 'search' | 'publish' | 'history';
 type HistoryEntryDto = {
   visitId: string; address: string; title: string;
   kind: VisitKind; via: VisitVia; visitedAt: string; pruned: boolean;
+  stackIndex: number | null;   // where it sits in the stack, null if it fell off
 };
 
 type HistoryStateDto = {

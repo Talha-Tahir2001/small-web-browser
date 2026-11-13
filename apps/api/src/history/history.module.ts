@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { BrowserStateStore } from './browser-state.store.js';
-import { BrowserState, BrowserStateSchema } from './schemas/browser-state.schema.js';
 import { Visit, VisitSchema } from '../visits/schemas/visit.schema.js';
+import { BrowserStateStore } from './browser-state.store.js';
+import { HistoryController } from './history.controller.js';
+import { HistoryService } from './history.service.js';
+import { BrowserState, BrowserStateSchema } from './schemas/browser-state.schema.js';
 
 /**
  * The navigable stack.
@@ -18,7 +20,8 @@ import { Visit, VisitSchema } from '../visits/schemas/visit.schema.js';
       { name: Visit.name, schema: VisitSchema },
     ]),
   ],
-  providers: [BrowserStateStore],
-  exports: [BrowserStateStore, MongooseModule],
+  controllers: [HistoryController],
+  providers: [BrowserStateStore, HistoryService],
+  exports: [BrowserStateStore, HistoryService, MongooseModule],
 })
 export class HistoryModule {}
