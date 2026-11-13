@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { HistoryModule } from '../history/history.module.js';
+import { SearchModule } from '../search/search.module.js';
 import { Site, SiteSchema } from '../sites/schemas/site.schema.js';
 import { RecordVisitDto } from './dto/record-visit.dto.js';
 import { VisitsController } from './visits.controller.js';
@@ -15,6 +16,7 @@ import { Visit, VisitSchema } from './schemas/visit.schema.js';
       { name: Site.name, schema: SiteSchema },
     ]),
     HistoryModule,
+    SearchModule,
   ],
   controllers: [VisitsController],
   providers: [VisitsService],
