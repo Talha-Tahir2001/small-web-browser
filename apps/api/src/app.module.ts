@@ -1,22 +1,28 @@
 import { Module } from '@nestjs/common';
-import { createObserveModule } from '@nestjs/observe';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 
-export const { ObserveModule, ObserveInstrument } = createObserveModule();
+import { configuration } from './common/config/configuration.js';
+import { HealthModule } from './health/health.module.js';
+import { PeopleModule } from './people/people.module.js';
+import { SitesModule } from './sites/sites.module.js';
+import { VisitsModule } from './visits/visits.module.js';
+import { HistoryModule } from './history/history.module.js';
 
 @Module({
   imports: [
-    // Distributed tracing, auto-correlated logs, request/job metrics, error
-    // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com,
-    // then run `npx @nestjs/observe link` to write your key pair into .env.
-    ObserveModule.forRoot({
-      appKey: process.env.OBSERVE_APP_KEY ?? 'YOUR_APP_KEY',
-      appSecret: process.env.OBSERVE_APP_SECRET ?? 'YOUR_APP_SECRET',
-      serviceId: 'api',
+    ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        uri: config.get<string>('mongoUri') as string,
+      }),
     }),
+    HealthModule,
+    PeopleModule,
+    SitesModule,
+    VisitsModule,
+    HistoryModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
