@@ -10,6 +10,7 @@ import { badRequest } from '../common/errors.js';
 import { notFoundPage, offWebPage } from '../common/pages.js';
 import { BrowserStateStore } from '../history/browser-state.store.js';
 import { toHistoryStateDto } from '../history/history-state.dto.js';
+import { toVisitDto } from './visit.dto.js';
 import { Site, type SiteDocument } from '../sites/schemas/site.schema.js';
 import { RecordVisitDto } from './dto/record-visit.dto.js';
 import { Visit, type VisitDocument } from './schemas/visit.schema.js';
@@ -87,7 +88,7 @@ export class VisitsService {
     await this.store.save(personId, next.state);
 
     return {
-      visit: this.toVisitDto(visit),
+      visit: toVisitDto(visit, this.config.get<number>('port') ?? 4000),
       state: toHistoryStateDto(personId.toString(), next.state),
     };
   }
@@ -129,23 +130,6 @@ export class VisitsService {
 
   private toVisitDto(visit: VisitDocument): VisitDto {
     const port = this.config.get<number>('port') ?? 4000;
-
-    return {
-      visitId: visit._id.toString(),
-      address: visit.address,
-      kind: visit.kind,
-      title: visit.title,
-      via: visit.via,
-      referrerAddress: visit.referrerAddress,
-      visitedAt: visit.visitedAt.toISOString(),
-      renderUrl: `http://127.0.0.1:${port}/render/${visit._id.toString()}`,
-      snapshot: {
-        title: visit.snapshot.title,
-        html: visit.snapshot.html,
-        query: visit.snapshot.query,
-        resultAddresses: visit.snapshot.resultAddresses ?? [],
-        errorCode: visit.snapshot.errorCode,
-      },
-    };
+    return toVisitDto(visit, port);
   }
 }
