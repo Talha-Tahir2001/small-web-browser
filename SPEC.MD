@@ -603,21 +603,26 @@ script of ours, as the last element in the document:
     if (!a) return;
     var href = a.getAttribute('href');
     if (!href) return;
-    var url;
-    try { url = new URL(href, location.href); } catch (err) { return; }
     e.preventDefault();
-    parent.postMessage({ type: 'wyxan:navigate', href: url.href }, '*');
+    parent.postMessage({ type: 'wyxan:navigate', href: href }, '*');
   }, true);
 </script>
 ```
+
+The href is posted **as the author wrote it**, not resolved. The frame cannot resolve it
+correctly: its own location is the render URL (`/render/<visitId>`), not the address of the page
+it is showing, so `new URL(href, location.href)` would resolve a relative link against the wrong
+base. The shell knows the address of the page on screen, so the shell resolves it - see
+`resolveLink` in `packages/shared`.
 
 The parent receives the message and validates it before acting:
 
 - The message source must be the current iframe (`event.source === iframeRef.current.contentWindow`).
   The frame has an **opaque origin**, so origin-checking is not possible; source-checking is the
   correct control.
-- The URL is re-normalised by the shared library. Only in-web addresses are navigable; anything
-  else is treated as off-web.
+- The href is resolved against the current page's address and then re-normalised by the shared
+  library. Only in-web addresses are navigable; anything else is treated as off-web. A link with
+  a scheme that is not `http` or `https` — `javascript:` in particular — is refused outright.
 
 **Cost and honesty.** We inject one script into the author's page; everything else is verbatim.
 The author's own scripts still run, but they cannot remove the bridge (capture-phase listener on

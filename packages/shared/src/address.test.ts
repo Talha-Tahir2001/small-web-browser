@@ -6,6 +6,7 @@ import {
   isInWeb,
   normalizeAddress,
   resolveKind,
+  resolveLink,
 } from './address.js';
 
 /** The normalisation of an input, or a failure. */
@@ -211,6 +212,62 @@ describe('hostOf', () => {
 
   it('returns the host of an address with a path', () => {
     expect(hostOf('tidepool.zz/a/b')).toBe('tidepool.zz');
+  });
+});
+
+describe('resolveLink', () => {
+  it('resolves a sibling host', () => {
+    const result = resolveLink('kelp-forest.zz', 'tidepool.zz');
+
+    expect(result).toEqual({ ok: true, address: 'kelp-forest.zz' });
+  });
+
+  it('resolves a sibling host with a path', () => {
+    const result = resolveLink('kelp-forest.zz/deep', 'tidepool.zz');
+
+    expect(result).toEqual({ ok: true, address: 'kelp-forest.zz/deep' });
+  });
+
+  it('resolves a place inside the current host', () => {
+    const result = resolveLink('tide-pools', 'tidepool.zz/tide-pools');
+
+    expect(result).toEqual({ ok: true, address: 'tidepool.zz/tide-pools' });
+  });
+
+  it('resolves a root-relative link', () => {
+    const result = resolveLink('/kelp-forest.zz', 'tidepool.zz');
+
+    expect(result).toEqual({ ok: true, address: 'kelp-forest.zz' });
+  });
+
+  it('resolves an absolute url', () => {
+    const result = resolveLink('https://kelp-forest.zz/deep', 'tidepool.zz');
+
+    expect(result).toEqual({ ok: true, address: 'kelp-forest.zz/deep' });
+  });
+
+  it('drops the fragment of an absolute url', () => {
+    const result = resolveLink('https://kelp-forest.zz/deep#part', 'tidepool.zz');
+
+    expect(result).toEqual({ ok: true, address: 'kelp-forest.zz/deep' });
+  });
+
+  it('keeps a link out of the web out of the web', () => {
+    const result = resolveLink('example.com', 'tidepool.zz');
+
+    expect(result).toEqual({ ok: true, address: 'example.com' });
+  });
+
+  it('refuses a link that is not an address', () => {
+    const result = resolveLink('javascript:alert(1)', 'tidepool.zz');
+
+    expect(result.ok).toBe(false);
+  });
+
+  it('refuses an empty link', () => {
+    const result = resolveLink('   ', 'tidepool.zz');
+
+    expect(result.ok).toBe(false);
   });
 });
 

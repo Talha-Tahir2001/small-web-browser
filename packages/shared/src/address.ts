@@ -35,6 +35,9 @@ export type AddressResult =
 const LABEL = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 const WHITESPACE_OR_CONTROL = /[\s\u0000-\u001F\u007F]/;
 const SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//;
+const ANY_SCHEME = /^[a-zA-Z][a-zA-Z0-9+.-]*:/;
+/** The characters a path may be made of. Everything else is refused. */
+const SAFE_PATH = /^[a-z0-9\-._~/%]*$/;
 const IPV4 = /^\d{1,3}(\.\d{1,3}){3}$/;
 
 /**
@@ -140,6 +143,10 @@ export function normalizeAddress(input: string): AddressResult {
     path = '';
   }
 
+  if (!SAFE_PATH.test(path)) {
+    return { ok: false, error: 'That address contains characters this web cannot hold.' };
+  }
+
   const address = path.length > 0 ? `${host}${path}` : host;
 
   if (address.length > MAX_ADDRESS_LENGTH) {
@@ -147,6 +154,68 @@ export function normalizeAddress(input: string): AddressResult {
   }
 
   return { ok: true, address, inWeb: isInWeb(address) };
+}
+
+/**
+ * Resolve a link found inside a page.
+ *
+ * A link is written by an author, so it may be relative, absolute, or
+ * nonsense. This turns it into an address, or says it is not one.
+ *
+ * The rules follow the shape of the addresses themselves. An address is a
+ * host - `tidepool.zz` - optionally with a path below it, so a link with a
+ * dot in its first segment is naming a host (`kelp-forest.zz`), and a link
+ * without one is naming a place inside the current host (`tide-pools`).
+ *
+ * @param href the link as the author wrote it
+ * @param currentAddress the address of the page the link is on
+ */
+export function resolveLink(
+  href: string,
+  currentAddress: string,
+): { ok: true; address: string } | { ok: false; error: string } {
+  const trimmed = href.trim();
+
+  if (trimmed.length === 0) {
+    return { ok: false, error: 'That link does not point anywhere.' };
+  }
+  if (WHITESPACE_OR_CONTROL.test(trimmed)) {
+    return { ok: false, error: 'That link does not point anywhere.' };
+  }
+
+  // An absolute URL is taken at its word, minus the parts that do not
+  // belong to an address. Anything with a scheme that is not http or https
+  // is refused outright - `javascript:` in particular.
+  if (ANY_SCHEME.test(trimmed)) {
+    if (!SCHEME.test(trimmed)) {
+      return { ok: false, error: 'That link does not point anywhere.' };
+    }
+    return normaliseResolved(trimmed);
+  }
+
+  // A root-relative link names something at the root of the web.
+  if (trimmed.startsWith('/')) {
+    return normaliseResolved(trimmed.slice(1));
+  }
+
+  // A link with a host in it is a sibling host.
+  const firstSegment = trimmed.split('/')[0] ?? '';
+  if (firstSegment.includes('.')) {
+    return normaliseResolved(trimmed);
+  }
+
+  // Otherwise it is a place inside the host we are already on.
+  const currentHost = hostOf(currentAddress);
+  return normaliseResolved(`${currentHost}/${trimmed}`);
+}
+
+/** Normalise something that is already meant to be an address. */
+function normaliseResolved(candidate: string): { ok: true; address: string } | { ok: false; error: string } {
+  const result = normalizeAddress(candidate);
+  if (!result.ok) {
+    return { ok: false, error: 'That link does not point anywhere.' };
+  }
+  return { ok: true, address: result.address };
 }
 
 /**
