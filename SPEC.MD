@@ -492,25 +492,33 @@ Implementation — a single aggregation pipeline:
 [
   { $match: { $text: { $search: q } } },
   { $addFields: { score: { $meta: 'textScore' } } },
-  { $addFields: { titleExact: { $cond: [{ $eq: ['$title', q] }, 1000, 0] } } },
+  { $addFields: { titleExact: { $cond: [{ $eq: [{ $toLower: '$title' }, q.toLowerCase()] }, 1000, 0] } } },
   { $sort: { titleExact: -1, score: -1, address: 1 } },   // deterministic tie-break
   { $skip: offset },
   { $limit: limit },
-  { $project: { address: 1, title: 1, score: 1, searchText: 1, _id: 0 } },
+  { $project: { address: 1, title: 1, score: 1, html: 1, _id: 0 } },
 ]
 ```
 
 `total` comes from a parallel `$count` stage in the same pipeline.
 
-Snippets are produced in the service from `searchText` (first occurrence of a query term, ±60
-characters, whitespace-collapsed), not by a MongoDB projection, so snippet rules stay in
-application code and are unit-testable.
+Snippets are produced in the service from the page's own text - the prose, with the markup
+stripped - at the first occurrence of a query term, ±60 characters, whitespace-collapsed. Not by
+a MongoDB projection, so snippet rules stay in application code and are unit-testable; and not
+from `searchText`, which has been folded for indexing and therefore reads as a bag of words
+rather than as a sentence.
 
 **Documented limitations** (to be stated in the walkthrough, not hidden): MongoDB's built-in text
 index applies its default English stemmer and stop-word list; it offers no fuzzy matching, no
 autocomplete, no synonym support, and permits only one text index per collection. For a
 12-page corpus this is the right trade-off — it needs no extra service. If the corpus grew
 materially, Atlas Search (BM25) or Meilisearch would be the upgrade path.
+
+**The search as an arrival.** `GET /api/search` only *finds* pages; it records nothing. The
+arrival happens when the reader chooses: the browser then posts `search:<query>` to
+`/api/visits` with `via: 'search'`, and the server resolves the results and stores them in the
+arrival's snapshot. The results are part of the snapshot, so going Back returns you to the
+results that were on screen rather than to whatever the search returns now.
 
 ### 5.6 `GET /render/:visitId` — the sandboxed document
 

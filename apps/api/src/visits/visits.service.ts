@@ -11,9 +11,13 @@ import { notFoundPage, offWebPage } from '../common/pages.js';
 import { BrowserStateStore } from '../history/browser-state.store.js';
 import { toHistoryStateDto } from '../history/history-state.dto.js';
 import { toVisitDto } from './visit.dto.js';
+import { SearchService } from '../search/search.service.js';
 import { Site, type SiteDocument } from '../sites/schemas/site.schema.js';
 import { RecordVisitDto } from './dto/record-visit.dto.js';
 import { Visit, type VisitDocument } from './schemas/visit.schema.js';
+
+/** The prefix that marks an arrival at a set of search results. */
+export const SEARCH_PREFIX = 'search:';
 
 export type RecordVisitResult = {
   visit: VisitDto;
@@ -27,6 +31,7 @@ export class VisitsService {
     @InjectModel(Site.name) private readonly sites: Model<SiteDocument>,
     private readonly store: BrowserStateStore,
     private readonly config: ConfigService,
+    private readonly search: SearchService,
   ) {}
 
   /**
@@ -42,9 +47,17 @@ export class VisitsService {
     }
     const personId = new Types.ObjectId(dto.personId);
 
+    const raw = dto.address ?? '';
+
+    // A search is an arrival too. It has a pseudo-address, and it occupies a
+    // place in the history, so that going Back returns you to the results.
+    if (raw.startsWith(SEARCH_PREFIX)) {
+      return this.arriveBySearch(dto, personId, raw.slice(SEARCH_PREFIX.length));
+    }
+
     // The client normalises the address too, for instant feedback, but the
     // server never trusts it.
-    const normalised = normalizeAddress(dto.address ?? '');
+    const normalised = normalizeAddress(raw);
     if (!normalised.ok) {
       throw badRequest('That is not an address this web can hold.');
     }
@@ -80,6 +93,61 @@ export class VisitsService {
       title: snapshot.title,
       kind,
       via: dto.via,
+      visitedAt: visit.visitedAt.toISOString(),
+      pruned: false,
+    });
+
+    await this.store.markPruned(next.pruned.map((entry) => entry.visitId));
+    await this.store.save(personId, next.state);
+
+    return {
+      visit: toVisitDto(visit, this.config.get<number>('port') ?? 4000),
+      state: toHistoryStateDto(personId.toString(), next.state),
+    };
+  }
+
+  /**
+   * Record the arrival at a set of search results.
+   *
+   * The results are part of the snapshot, so going back to this arrival
+   * shows the results that were on screen, not whatever the search returns
+   * now.
+   */
+  private async arriveBySearch(
+    dto: RecordVisitDto,
+    personId: Types.ObjectId,
+    query: string,
+  ): Promise<RecordVisitResult> {
+    const response = await this.search.find(query);
+
+    const address = `${SEARCH_PREFIX}${query}`;
+    const snapshot: VisitSnapshotDto = {
+      title: `Search: ${query}`,
+      html: null,
+      query,
+      resultAddresses: response.results.map((result) => result.address),
+      errorCode: null,
+    };
+
+    const visit = await this.visits.create({
+      personId,
+      address,
+      kind: 'search',
+      title: snapshot.title,
+      via: 'search',
+      referrerAddress: null,
+      visitedAt: new Date(),
+      snapshot,
+      pruned: false,
+    });
+
+    const previous = await this.store.load(personId);
+    const next = push(previous, {
+      visitId: visit._id.toString(),
+      address,
+      title: snapshot.title,
+      kind: 'search',
+      via: 'search',
       visitedAt: visit.visitedAt.toISOString(),
       pruned: false,
     });
