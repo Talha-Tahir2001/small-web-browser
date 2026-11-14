@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { IconHistory, IconPencil } from '@tabler/icons-react';
 
 import { AddressBar, SearchBox } from '@/components/AddressBar';
+import { HistoryPanel } from '@/components/HistoryPanel';
 import { PersonPicker } from '@/components/PersonPicker';
 import { Viewport } from '@/components/Viewport';
 import { Button } from '@/components/ui/button';
@@ -99,7 +100,18 @@ export default function Page() {
           />
         </main>
 
-        {historyOpen ? <Separator orientation="vertical" className="h-auto" /> : null}
+        {historyOpen ? (
+          <>
+            <Separator orientation="vertical" className="h-auto" />
+            <aside className="w-80 shrink-0 bg-background" aria-label="History">
+              <HistoryPanel
+                list={state.list}
+                onJump={(index) => void actions.jump(index)}
+                onOpenAddress={(address) => void actions.goToAddress(address)}
+              />
+            </aside>
+          </>
+        ) : null}
       </div>
     </div>
   );
