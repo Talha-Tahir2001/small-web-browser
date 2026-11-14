@@ -44,3 +44,26 @@ export type HistoryStateDto = {
     canGoBack: boolean;
     canGoForward: boolean;
 };
+
+/** One row of the history list: an arrival, and where it sits in the stack. */
+export type HistoryListEntryDto = HistoryEntry & {
+    /** Where it sits in the stack, or null when it has fallen off it. */
+    stackIndex: number | null;
+};
+
+/**
+ * The history list: the permanent record, not the stack.
+ *
+ * Every arrival the person has ever made, in order. The ones that have
+ * fallen off the stack are still here, marked as lost - "forward can be
+ * lost" has to be visible rather than silent.
+ */
+export type HistoryListDto = {
+    personId: string;
+    cursor: number;
+    canGoBack: boolean;
+    canGoForward: boolean;
+    entries: HistoryListEntryDto[];
+    totalVisits: number;
+    lostCount: number;
+};

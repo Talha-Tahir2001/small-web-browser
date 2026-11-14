@@ -63,6 +63,16 @@ export class RenderService {
    * beacons, no exfiltration. `base-uri 'none'` means a `<base>` tag in the
    * author's HTML cannot hijack how links are resolved. `form-action
    * 'none'` means a form cannot be submitted anywhere.
+   *
+   * `script-src 'unsafe-inline'` is what lets the page's own JavaScript run
+   * at all - a page with no scripts is not a web, and the brief expects
+   * scripts to run. It costs nothing here, because the document has an
+   * opaque origin and no network: a script in this frame can mess with this
+   * frame and nothing else. It cannot reach the app, submit a form, open a
+   * popup, or navigate the top window.
+   *
+   * Note that `script-src` names no hosts, so a *remote* script still cannot
+   * be loaded - only scripts written into the page itself.
    */
   contentSecurityPolicy(): string {
     const origins = this.config.get<string[]>('webOrigins') ?? [];
@@ -70,6 +80,7 @@ export class RenderService {
     return [
       'sandbox allow-scripts',
       "default-src 'none'",
+      "script-src 'unsafe-inline'",
       "style-src 'unsafe-inline'",
       'img-src data: blob:',
       'font-src data:',
