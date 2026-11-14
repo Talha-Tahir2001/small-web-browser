@@ -111,6 +111,7 @@ itself part of the deliverable.
 
 | # | Commit message | Day | Why it is a separate commit |
 | :-- | :-- | :-- | :-- |
+| 0 | `docs: add PRD, SPEC and PLAN for the small web browser` | 0 | The three documents travel with the source; they are the reasoning, not an afterthought |
 | 1 | `chore: scaffold npm 12 workspaces monorepo with next.js 16, nestjs 12 (esm) and shared package` | 1 | Reviewer sees the shape of the repo first |
 | 2 | `feat(shared): address normalisation rules with unit tests` | 1 | The rules are a contract; they get reviewed alone |
 | 3 | `feat(shared): browser history state machine with unit tests` | 1 | The core of the assessment, isolated and provable |
@@ -132,85 +133,96 @@ itself part of the deliverable.
 If the schedule slips, commits 12–14 are merged into 10 and 13 into 10; the history story is
 preserved.
 
+Two commits came after the plan was written, both because the thing was tested by clicking it
+rather than by reading it:
+
+- `chore: satisfy the linter, and fix the two React patterns it caught` — the address bar was
+  resetting its field in an effect, and the browser hook was reading the current state from a
+  ref.
+- `fix(web): going back to a search shows the results again` — the results are not part of the
+  arrival, so coming back to one has to fetch them again.
+
+They are in the history because a reviewer should be able to see them happen.
+
 ---
 
 ## 4. Task checklist
 
 ### 4.1 Foundations
 
-- [ ] npm 12 workspaces root; `packages/shared` builds to ESM + types
-- [ ] `apps/api` on NestJS 12 in **ESM** (`"type": "module"`, `module: nodenext`), port 4000, CORS
+- [x] npm 12 workspaces root; `packages/shared` builds to ESM + types
+- [x] `apps/api` on NestJS 12 in **ESM** (`"type": "module"`, `module: nodenext`), port 4000, CORS
       restricted to `WEB_ORIGINS`
-- [ ] `apps/web` on Next.js 16 App Router, port 3000
-- [ ] TypeScript strict mode everywhere; no `any` in `packages/shared`
-- [ ] TypeScript **6.0.3** in `apps/api`, **7.0.2** in `packages/shared` and `apps/web` (SPEC §1.3.2)
-- [ ] oxlint + Prettier; `npm run lint` clean
-- [ ] `docker-compose.yml`: mongo:8, named volume, healthcheck
-- [ ] `.env.example` documenting every variable from SPEC §1.4
+- [x] `apps/web` on Next.js 16 App Router, port 3000
+- [x] TypeScript strict mode everywhere; no `any` in `packages/shared`
+- [x] TypeScript **6.0.3** in `apps/api`, **7.0.2** in `packages/shared` and `apps/web` (SPEC §1.3.2)
+- [x] oxlint + Prettier; `npm run lint` clean
+- [x] `docker-compose.yml`: mongo:8, named volume, healthcheck
+- [x] `.env.example` documenting every variable from SPEC §1.4
 
 ### 4.2 Shared package
 
-- [ ] `normalizeAddress(input): { ok: true, address, kind } | { ok: false, error }`
-- [ ] `isInWeb(address): boolean`
-- [ ] `history` state machine: `push`, `back`, `forward`, `jump` — all pure, all returning new state
-- [ ] `history` unit tests covering every rule in SPEC §3.1
-- [ ] `address` unit tests covering every row of SPEC §4.2
-- [ ] Shared DTO types matching SPEC §10
+- [x] `normalizeAddress(input): { ok: true, address, kind } | { ok: false, error }`
+- [x] `isInWeb(address): boolean`
+- [x] `history` state machine: `push`, `back`, `forward`, `jump` — all pure, all returning new state
+- [x] `history` unit tests covering every rule in SPEC §3.1
+- [x] `address` unit tests covering every row of SPEC §4.2
+- [x] Shared DTO types matching SPEC §10
 
 ### 4.3 API
 
-- [ ] Mongoose schemas with declared indexes (unique address, text index, person+time)
-- [ ] `GET /api/health`, `GET /api/people`
-- [ ] `POST /api/sites` — validation order, conflict + suggestion, `searchText` derivation
-- [ ] `GET /api/sites/:address`
-- [ ] `POST /api/visits` — normalise, resolve kind, snapshot, push, persist
-- [ ] `GET /api/history`, `POST /api/history/{back,forward,jump}`
-- [ ] `GET /api/search` — pipeline, title boost, deterministic tie-break, snippets
-- [ ] `GET /render/:visitId` — headers first, then body; 404/offweb pages; bridge injection
-- [ ] Structured logs for publish, navigate, back/forward/jump, search
-- [ ] Error shape consistent: `{ statusCode, message, error }`
+- [x] Mongoose schemas with declared indexes (unique address, text index, person+time)
+- [x] `GET /api/health`, `GET /api/people`
+- [x] `POST /api/sites` — validation order, conflict + suggestion, `searchText` derivation
+- [x] `GET /api/sites/:address`
+- [x] `POST /api/visits` — normalise, resolve kind, snapshot, push, persist
+- [x] `GET /api/history`, `POST /api/history/{back,forward,jump}`
+- [x] `GET /api/search` — pipeline, title boost, deterministic tie-break, snippets
+- [x] `GET /render/:visitId` — headers first, then body; 404/offweb pages; bridge injection
+- [x] Structured logs for publish, navigate, back/forward/jump, search
+- [x] Error shape consistent: `{ statusCode, message, error }`
 
 ### 4.4 Web
 
-- [ ] Shell layout: toolbar, address bar, search box, history drawer, viewport
-- [ ] Person picker persisted in `localStorage`
-- [ ] Address bar: Enter to navigate, inline validation errors, no navigation on invalid input
-- [ ] Viewport: iframe keyed by `visitId`; results panel for `kind: 'search'`
-- [ ] Back / Forward buttons, disabled at the boundaries, driven by `canGoBack`/`canGoForward`
-- [ ] History drawer: scrollable, current marked (`aria-current`), click to jump, lost entries styled
-- [ ] Search panel: query echo, results, click to navigate, empty state
-- [ ] Publish panel: address/title/HTML, live preview in a sandboxed `srcdoc` frame, conflict display
-- [ ] Keyboard operable throughout; visible focus; accessible names
+- [x] Shell layout: toolbar, address bar, search box, history drawer, viewport
+- [x] Person picker persisted in `localStorage`
+- [x] Address bar: Enter to navigate, inline validation errors, no navigation on invalid input
+- [x] Viewport: iframe keyed by `visitId`; results panel for `kind: 'search'`
+- [x] Back / Forward buttons, disabled at the boundaries, driven by `canGoBack`/`canGoForward`
+- [x] History drawer: scrollable, current marked (`aria-current`), click to jump, lost entries styled
+- [x] Search panel: query echo, results, click to navigate, empty state
+- [x] Publish panel: address/title/HTML, live preview in a sandboxed `srcdoc` frame, conflict display
+- [x] Keyboard operable throughout; visible focus; accessible names
 
 ### 4.5 Containment (verified, not assumed)
 
-- [ ] App origin `localhost:3000`; page origin `127.0.0.1:4000`
-- [ ] `iframe sandbox="allow-scripts"` — no `allow-same-origin`, no `allow-forms`, no `allow-top-navigation`
-- [ ] `Content-Security-Policy: sandbox allow-scripts; default-src 'none'; …` on `/render/:visitId`
-- [ ] `frame-ancestors` limited to `WEB_ORIGINS`
-- [ ] `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`
-- [ ] `base-uri 'none'` — `<base>` in author HTML cannot hijack link resolution
-- [ ] Hostile-HTML smoke test published and inspected: `<script>`, `<iframe>`, `<form>`, `<base>`,
+- [x] App origin `localhost:3000`; page origin `127.0.0.1:4000`
+- [x] `iframe sandbox="allow-scripts"` — no `allow-same-origin`, no `allow-forms`, no `allow-top-navigation`
+- [x] `Content-Security-Policy: sandbox allow-scripts; default-src 'none'; …` on `/render/:visitId`
+- [x] `frame-ancestors` limited to `WEB_ORIGINS`
+- [x] `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`
+- [x] `base-uri 'none'` — `<base>` in author HTML cannot hijack link resolution
+- [x] Hostile-HTML smoke test published and inspected: `<script>`, `<iframe>`, `<form>`, `<base>`,
       remote `<img>`, `javascript:` href, `onerror=` handler — none escape
-- [ ] Direct navigation to `/render/:visitId` in a tab is still sandboxed (CSP header)
-- [ ] `postMessage` handler validates `event.source` against the iframe ref
+- [x] Direct navigation to `/render/:visitId` in a tab is still sandboxed (CSP header)
+- [x] `postMessage` handler validates `event.source` against the iframe ref
 
 ### 4.6 Seed
 
-- [ ] Six people; twelve sites with real prose; four people with an hour of history
-- [ ] Link graph supports a trail four deep; ≥ 3 links to addresses that never existed
-- [ ] Repeat visits, long trails, one near-complete trail
-- [ ] One deliberately truncated forward stack so lost entries are visible on first launch
-- [ ] Deterministic `_id`s; upserts; `--reset`; identical output across runs
-- [ ] Integration test: two runs → identical counts
+- [x] Six people; twelve sites with real prose; four people with an hour of history
+- [x] Link graph supports a trail four deep; ≥ 3 links to addresses that never existed
+- [x] Repeat visits, long trails, one near-complete trail
+- [x] One deliberately truncated forward stack so lost entries are visible on first launch
+- [x] Deterministic `_id`s; upserts; `--reset`; identical output across runs
+- [x] Integration test: two runs → identical counts
 
 ### 4.7 Tests & docs
 
-- [ ] Unit (vitest): address, history, search text, snippets
-- [ ] Integration (vitest + `mongodb-memory-server`): publish, search, navigate, back,
+- [x] Unit (vitest): address, history, search text, snippets
+- [x] Integration (vitest + `mongodb-memory-server`): publish, search, navigate, back,
       forward-loss, jump, restore-after-replace, notfound, offweb, seed idempotency
-- [ ] README: the commands from SPEC §9, plus "Decisions" and a manual verification checklist
-- [ ] No TODOs in shipped paths; no stubbed endpoints
+- [x] README: the commands from SPEC §9, plus "Decisions" and a manual verification checklist
+- [x] No TODOs in shipped paths; no stubbed endpoints
 
 ---
 
@@ -256,13 +268,13 @@ exact trail in step 2 exists on every fresh seed — the walk can be walked agai
 
 ## 7. Deliverables checklist
 
-- [ ] Git repository with the 17-commit history above (or an equivalent narrative)
-- [ ] `npm run seed` — deterministic, idempotent, `--reset` supported
-- [ ] README with the run commands and nothing else in the way
-- [ ] `PRD.MD`, `SPEC.MD`, `PLAN.MD` committed at the repo root
-- [ ] Narrated screen recording, 4–5 minutes, covering the six required beats
-- [ ] Tests green: unit + integration
-- [ ] `curl -I http://127.0.0.1:4000/render/<id>` shows the containment headers
+- [x] Git repository with the 17-commit history above (or an equivalent narrative)
+- [x] `npm run seed` — deterministic, idempotent, `--reset` supported
+- [x] README with the run commands and nothing else in the way
+- [x] `PRD.MD`, `SPEC.MD`, `PLAN.MD` committed at the repo root
+- [x] Narrated screen recording, 4–5 minutes, covering the six required beats
+- [x] Tests green: unit + integration
+- [x] `curl -I http://127.0.0.1:4000/render/<id>` shows the containment headers
 
 ---
 

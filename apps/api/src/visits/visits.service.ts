@@ -7,6 +7,7 @@ import { normalizeAddress, push, resolveKind } from '@small-web-browser/shared';
 import type { VisitDto, VisitKind, VisitSnapshotDto } from '@small-web-browser/shared';
 
 import { badRequest } from '../common/errors.js';
+import { logEvent } from '../common/logger.js';
 import { notFoundPage, offWebPage } from '../common/pages.js';
 import { BrowserStateStore } from '../history/browser-state.store.js';
 import { toHistoryStateDto } from '../history/history-state.dto.js';
@@ -71,6 +72,8 @@ export class VisitsService {
     const snapshot = this.snapshotFor(kind, address, site);
 
     const referrer = dto.referrerAddress ? normalizeAddress(dto.referrerAddress) : null;
+
+    logEvent('navigate', { personId: dto.personId, address, kind, via: dto.via, referrer: dto.referrerAddress ?? null });
 
     const visit = await this.visits.create({
       personId,

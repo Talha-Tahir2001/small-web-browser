@@ -6,6 +6,7 @@ import type { PipelineStage } from 'mongoose';
 import { buildSnippet, htmlToText } from '@small-web-browser/shared';
 
 import { badRequest } from '../common/errors.js';
+import { logEvent } from '../common/logger.js';
 import { Site, type SiteDocument } from '../sites/schemas/site.schema.js';
 
 export type SearchResultDto = {
@@ -81,6 +82,8 @@ export class SearchService {
     ]);
 
     const total = totals.length > 0 ? (totals[0] as { total: number }).total : 0;
+
+    logEvent('search', { query, total });
 
     return {
       query,

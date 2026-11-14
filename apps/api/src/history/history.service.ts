@@ -13,6 +13,7 @@ import type {
 } from '@small-web-browser/shared';
 
 import { badRequest } from '../common/errors.js';
+import { logEvent } from '../common/logger.js';
 import { toVisitDto } from '../visits/visit.dto.js';
 import { Visit, type VisitDocument } from '../visits/schemas/visit.schema.js';
 import { BrowserStateStore } from './browser-state.store.js';
@@ -86,6 +87,8 @@ export class HistoryService {
     }
 
     await this.store.save(personId, result.state);
+    logEvent('history.back', { personId: rawPersonId, cursor: result.state.cursor });
+
     return this.toResult(personId, result.state, []);
   }
 
@@ -100,6 +103,8 @@ export class HistoryService {
     }
 
     await this.store.save(personId, result.state);
+    logEvent('history.forward', { personId: rawPersonId, cursor: result.state.cursor });
+
     return this.toResult(personId, result.state, []);
   }
 
@@ -120,6 +125,7 @@ export class HistoryService {
 
     await this.store.markPruned(result.pruned.map((entry) => entry.visitId));
     await this.store.save(personId, result.state);
+    logEvent('history.jump', { personId: rawPersonId, index, pruned: result.pruned.length });
 
     return this.toResult(personId, result.state, result.pruned);
   }

@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import { normalizeAddress } from '@small-web-browser/shared';
 
 import { badRequest, conflict, notFound } from '../common/errors.js';
+import { logEvent } from '../common/logger.js';
 import { Person, PersonDocument } from '../people/schemas/person.schema.js';
 import { PublishSiteDto } from './dto/publish-site.dto.js';
 import { validatePublish } from './publish-validation.js';
@@ -75,6 +76,8 @@ export class SitesService {
       // A replace bumps the version. The old page does not disappear: it
       // survives inside the snapshots of the visits that already saw it,
       // which is what makes "the page that was left" mean something.
+      logEvent('publish.replace', { address, title, authorId: dto.authorId });
+
       const updated = await this.sites
         .findOneAndUpdate(
           { address },
@@ -89,6 +92,8 @@ export class SitesService {
 
       return this.toPublished(updated as SiteDocument);
     }
+
+    logEvent('publish', { address, title, version: 1, authorId: dto.authorId });
 
     const created = await this.sites.create({
       address,
