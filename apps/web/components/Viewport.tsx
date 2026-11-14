@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 
 import type { VisitDto } from '@small-web-browser/shared';
 
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLinkBridge } from '@/hooks/use-link-bridge';
 import type { SearchResponse } from '@/lib/api';
 
 /**
@@ -33,21 +34,7 @@ export function Viewport({
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
 
-  useEffect(() => {
-    function onMessage(event: MessageEvent) {
-      // The frame has an opaque origin, so it cannot be checked by origin.
-      // The source can be: it must be the frame we are showing.
-      if (event.source !== frameRef.current?.contentWindow) return;
-
-      const data = event.data as { type?: unknown; href?: unknown } | null;
-      if (!data || data.type !== 'wyxan:navigate' || typeof data.href !== 'string') return;
-
-      onFollowLink(data.href);
-    }
-
-    window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
-  }, [onFollowLink]);
+  useLinkBridge(frameRef, onFollowLink);
 
   if (!current) {
     return (
