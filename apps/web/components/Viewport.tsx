@@ -16,6 +16,9 @@ import type { SearchResponse } from '@/lib/api';
  * arriving at the same address twice shows the frame the second time round
  * rather than a cached one - and going back to an earlier arrival of that
  * address shows the page as it was then.
+ *
+ * A search is shown natively, not in a frame: the results are part of the
+ * browser, not a page published by a stranger.
  */
 export function Viewport({
   current,
@@ -62,6 +65,15 @@ export function Viewport({
     );
   }
 
+  if (current.kind === 'search') {
+    return (
+      <SearchResults
+        search={search}
+        query={current.snapshot.query ?? ''}
+        onOpen={onOpenResult}
+      />
+    );
+  }
 
   return (
     <iframe
@@ -76,8 +88,8 @@ export function Viewport({
 }
 
 /**
- * The results of a search, shown natively rather than in a frame: they are
- * part of the browser, not a page published by a stranger.
+ * The results of a search: what was written in the pages, not just their
+ * titles, with a passage from the matching text.
  */
 function SearchResults({
   search,
