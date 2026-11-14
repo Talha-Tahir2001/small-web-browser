@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 
 // mongoose is CommonJS, so under ESM its named exports are not available at
 // runtime; the default import is the module object, and that is what we want.
@@ -38,23 +39,33 @@ function timeAt(minute: number): Date {
 
 const COLLECTIONS = ['people', 'sites', 'visits', 'browserStates'] as const;
 
-async function seed(): Promise<void> {
-  const uri = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/wyxan';
-  const reset = process.argv.includes('--reset');
+export type SeedCounts = {
+  people: number;
+  sites: number;
+  visits: number;
+  browserStates: number;
+};
 
-  await mongoose.connect(uri);
-  const db = mongoose.connection.db;
+/**
+ * Seed the web.
+ *
+ * This opens its own connection rather than using the default one, so that
+ * it can be run inside a test that already has an application connected -
+ * and so that seeding never disturbs a running server.
+ */
+export async function runSeed(options: {
+  uri: string;
+  reset: boolean;
+}): Promise<SeedCounts> {
+  const { uri, reset } = options;
+
+  const connection = await mongoose.createConnection(uri).asPromise();
+  const db = connection.db;
 
   if (!db) {
     throw new Error('Could not reach the database.');
   }
 
-  if (reset) {
-    for (const name of COLLECTIONS) {
-      await db.collection(name).deleteMany({});
-    }
-    console.log('Reset: cleared people, sites, visits and browser states.');
-  }
 
   const personIdBySlug = new Map<string, mongoose.Types.ObjectId>();
   const siteIdByAddress = new Map<string, mongoose.Types.ObjectId>();
@@ -214,19 +225,38 @@ async function seed(): Promise<void> {
   await db.collection('visits').createIndex({ personId: 1, pruned: 1 });
   await db.collection('browserStates').createIndex({ personId: 1 }, { unique: true });
 
-  const counts = {
+  const counts: SeedCounts = {
     people: await db.collection('people').countDocuments(),
     sites: await db.collection('sites').countDocuments(),
     visits: await db.collection('visits').countDocuments(),
     browserStates: await db.collection('browserStates').countDocuments(),
   };
 
+  await connection.close();
+
+  return counts;
+}
+
+/** The seed command, as it is run from the command line. */
+async function seed(): Promise<void> {
+  const uri = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/wyxan';
+  const reset = process.argv.includes('--reset');
+
+  if (reset) {
+    const connection = await mongoose.createConnection(uri).asPromise();
+    for (const name of COLLECTIONS) {
+      await connection.db?.collection(name).deleteMany({});
+    }
+    await connection.close();
+    console.log('Reset: cleared people, sites, visits and browser states.');
+  }
+
+  const counts = await runSeed({ uri, reset: false });
+
   console.log(
     `Seeded ${counts.people} people, ${counts.sites} sites, ${counts.visits} arrivals and ` +
       `${counts.browserStates} history stacks.`,
   );
-
-  await mongoose.disconnect();
 }
 
 /** The slug of a person, from their name. */
@@ -234,8 +264,14 @@ function slugOf(name: string): string {
   return name.toLowerCase();
 }
 
-seed().catch(async (error: unknown) => {
-  console.error('The seed failed:', error instanceof Error ? error.message : error);
-  await mongoose.disconnect().catch(() => undefined);
-  process.exitCode = 1;
-});
+// Only run the command when this file is the one being run, so that a test
+// can import `runSeed` without the command line firing as well.
+const invokedDirectly =
+  process.argv[1] !== undefined && pathToFileURL(process.argv[1]).href === import.meta.url;
+
+if (invokedDirectly) {
+  seed().catch((error: unknown) => {
+    console.error('The seed failed:', error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });
+}

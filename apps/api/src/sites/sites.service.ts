@@ -84,7 +84,7 @@ export class SitesService {
             $set: { title, html, searchText, updatedAt: now, authorId: author._id },
             $inc: { version: 1 },
           },
-          { new: true },
+          { returnDocument: 'after' },
         )
         .lean()
         .exec();
