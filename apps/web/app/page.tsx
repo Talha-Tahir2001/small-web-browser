@@ -7,6 +7,7 @@ import { IconHistory, IconPencil } from '@tabler/icons-react';
 import { AddressBar, SearchBox } from '@/components/AddressBar';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { PersonPicker } from '@/components/PersonPicker';
+import { PublishPanel } from '@/components/PublishPanel';
 import { Viewport } from '@/components/Viewport';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -24,6 +25,7 @@ import { useBrowser } from '@/hooks/use-browser';
 export default function Page() {
   const { state, actions } = useBrowser();
   const [historyOpen, setHistoryOpen] = useState(true);
+  const [publishOpen, setPublishOpen] = useState(false);
 
   const canGoBack = state.history?.canGoBack ?? false;
   const canGoForward = state.history?.canGoForward ?? false;
@@ -75,7 +77,7 @@ export default function Page() {
             <IconHistory />
             History
           </Button>
-          <Button variant="ghost" size="sm" disabled title="Coming with the publish panel">
+          <Button variant="ghost" size="sm" onClick={() => setPublishOpen(true)}>
             <IconPencil />
             Publish
           </Button>
@@ -113,6 +115,12 @@ export default function Page() {
           </>
         ) : null}
       </div>
+
+      <PublishPanel
+        open={publishOpen}
+        onOpenChange={setPublishOpen}
+        onPublish={actions.publish}
+      />
     </div>
   );
 }
