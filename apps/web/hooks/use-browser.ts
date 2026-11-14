@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useReducer } from 'react';
 
 import { normalizeAddress, resolveLink } from '@small-web-browser/shared';
 
@@ -19,8 +19,7 @@ const PERSON_KEY = 'wyxan.personId';
  */
 export function useBrowser() {
   const [state, dispatch] = useReducer(browserReducer, initialBrowserState);
-  const stateRef = useRef(state);
-  stateRef.current = state;
+  const { personId, current } = state;
 
   const report = useCallback((error: unknown) => {
     const message =
@@ -33,7 +32,20 @@ export function useBrowser() {
     dispatch({ type: 'error', error: message });
   }, []);
 
-  /** The person's id, from local storage, or the first person on the list. */
+  /** Load one person's history. */
+  const refresh = useCallback(
+    async (personId: string) => {
+      try {
+        const list = await api.history(personId);
+        dispatch({ type: 'history/loaded', list });
+      } catch (error) {
+        report(error);
+      }
+    },
+    [report],
+  );
+
+  /** The people who can browse, and who we are browsing as. */
   useEffect(() => {
     let cancelled = false;
 
@@ -44,7 +56,7 @@ export function useBrowser() {
 
         dispatch({ type: 'people/loaded', people });
 
-        const stored = typeof window !== 'undefined' ? window.localStorage.getItem(PERSON_KEY) : null;
+        const stored = window.localStorage.getItem(PERSON_KEY);
         const known = people.find((person) => person.id === stored);
         const personId = known?.id ?? people[0]?.id ?? null;
 
@@ -63,21 +75,11 @@ export function useBrowser() {
     };
   }, [report]);
 
-  /** Load one person's history. */
-  const refresh = useCallback(async (personId: string) => {
-    try {
-      const list = await api.history(personId);
-      dispatch({ type: 'history/loaded', list });
-    } catch (error) {
-      report(error);
-    }
-  }, [report]);
-
   // Load the history whenever the person changes.
   useEffect(() => {
-    if (!state.personId) return;
-    void refresh(state.personId);
-  }, [state.personId, refresh]);
+    if (!personId) return;
+    void refresh(personId);
+  }, [personId, refresh]);
 
   /** Switch to browsing as somebody else. */
   const choosePerson = useCallback((personId: string) => {
@@ -93,7 +95,6 @@ export function useBrowser() {
    */
   const navigate = useCallback(
     async (rawAddress: string, via: string, referrerAddress?: string) => {
-      const personId = stateRef.current.personId;
       if (!personId) return;
 
       dispatch({ type: 'busy', busy: true });
@@ -113,7 +114,7 @@ export function useBrowser() {
         report(error);
       }
     },
-    [refresh, report],
+    [personId, refresh, report],
   );
 
   /** Type an address into the address bar. */
@@ -136,7 +137,6 @@ export function useBrowser() {
   /** Follow a link from inside a published page. */
   const followLink = useCallback(
     async (href: string) => {
-      const current = stateRef.current.current;
       if (!current) return;
 
       const resolved = resolveLink(href, current.address);
@@ -147,7 +147,7 @@ export function useBrowser() {
 
       await navigate(resolved.address, 'link', current.address);
     },
-    [navigate],
+    [current, navigate],
   );
 
   /** Search, and record the results as an arrival. */
@@ -156,7 +156,6 @@ export function useBrowser() {
       const trimmed = query.trim();
       if (trimmed.length === 0) return;
 
-      const personId = stateRef.current.personId;
       if (!personId) return;
 
       dispatch({ type: 'busy', busy: true });
@@ -180,12 +179,11 @@ export function useBrowser() {
         report(error);
       }
     },
-    [refresh, report],
+    [personId, refresh, report],
   );
 
   /** Go back one arrival. */
   const back = useCallback(async () => {
-    const personId = stateRef.current.personId;
     if (!personId) return;
 
     dispatch({ type: 'busy', busy: true });
@@ -205,11 +203,10 @@ export function useBrowser() {
     } catch (error) {
       report(error);
     }
-  }, [refresh, report]);
+  }, [personId, refresh, report]);
 
   /** Go forward one arrival. */
   const forward = useCallback(async () => {
-    const personId = stateRef.current.personId;
     if (!personId) return;
 
     dispatch({ type: 'busy', busy: true });
@@ -228,12 +225,11 @@ export function useBrowser() {
     } catch (error) {
       report(error);
     }
-  }, [refresh, report]);
+  }, [personId, refresh, report]);
 
   /** Jump to an entry in the history. */
   const jump = useCallback(
     async (index: number) => {
-      const personId = stateRef.current.personId;
       if (!personId) return;
 
       dispatch({ type: 'busy', busy: true });
@@ -248,13 +244,12 @@ export function useBrowser() {
         report(error);
       }
     },
-    [refresh, report],
+    [personId, refresh, report],
   );
 
   /** Publish a page, and then arrive at it. */
   const publish = useCallback(
     async (input: { address: string; title: string; html: string }) => {
-      const personId = stateRef.current.personId;
       if (!personId) throw new ApiError('Choose a name first.', 0, null);
 
       const site = await api.publish({ ...input, authorId: personId });
@@ -263,7 +258,7 @@ export function useBrowser() {
 
       return site;
     },
-    [navigate],
+    [personId, navigate],
   );
 
   const dismissError = useCallback(() => dispatch({ type: 'error', error: null }), []);

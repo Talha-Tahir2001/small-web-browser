@@ -4,7 +4,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { HistoryModule } from '../history/history.module.js';
 import { SearchModule } from '../search/search.module.js';
 import { Site, SiteSchema } from '../sites/schemas/site.schema.js';
-import { RecordVisitDto } from './dto/record-visit.dto.js';
 import { VisitsController } from './visits.controller.js';
 import { VisitsService } from './visits.service.js';
 import { Visit, VisitSchema } from './schemas/visit.schema.js';

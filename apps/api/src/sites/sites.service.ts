@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import mongoose from 'mongoose';
 
-import { deriveSearchText, normalizeAddress } from '@small-web-browser/shared';
+import { normalizeAddress } from '@small-web-browser/shared';
 
 import { badRequest, conflict, notFound } from '../common/errors.js';
 import { Person, PersonDocument } from '../people/schemas/person.schema.js';
@@ -26,8 +26,6 @@ export type SiteDto = {
   publishedAt: string;
   version: number;
 };
-
-const MAX_TITLE_LENGTH = 200;
 
 @Injectable()
 export class SitesService {

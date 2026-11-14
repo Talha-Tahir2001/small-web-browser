@@ -66,6 +66,12 @@ export async function runSeed(options: {
     throw new Error('Could not reach the database.');
   }
 
+  if (reset) {
+    for (const name of COLLECTIONS) {
+      await db.collection(name).deleteMany({});
+    }
+    console.log('Reset: cleared people, sites, visits and browser states.');
+  }
 
   const personIdBySlug = new Map<string, mongoose.Types.ObjectId>();
   const siteIdByAddress = new Map<string, mongoose.Types.ObjectId>();
@@ -242,16 +248,7 @@ async function seed(): Promise<void> {
   const uri = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/wyxan';
   const reset = process.argv.includes('--reset');
 
-  if (reset) {
-    const connection = await mongoose.createConnection(uri).asPromise();
-    for (const name of COLLECTIONS) {
-      await connection.db?.collection(name).deleteMany({});
-    }
-    await connection.close();
-    console.log('Reset: cleared people, sites, visits and browser states.');
-  }
-
-  const counts = await runSeed({ uri, reset: false });
+  const counts = await runSeed({ uri, reset });
 
   console.log(
     `Seeded ${counts.people} people, ${counts.sites} sites, ${counts.visits} arrivals and ` +

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -26,12 +26,16 @@ export function AddressBar({
   onSubmit: (address: string) => void;
 }) {
   const [draft, setDraft] = useState(value);
+  const [shownValue, setShownValue] = useState(value);
 
   // Follow the browser when it navigates, but never while the reader is
-  // halfway through typing an address of their own.
-  useEffect(() => {
+  // halfway through typing an address of their own. Adjusting the state
+  // during render, rather than in an effect, is React's way of resetting a
+  // field when the thing it shows changes.
+  if (value !== shownValue) {
+    setShownValue(value);
     setDraft(value);
-  }, [value]);
+  }
 
   return (
     <form
