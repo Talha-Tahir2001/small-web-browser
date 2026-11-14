@@ -99,6 +99,7 @@ export default function Page() {
             search={state.search}
             onFollowLink={(href) => void actions.followLink(href)}
             onOpenResult={(address) => void actions.followLink(address)}
+            onNeedSearch={(query) => void actions.loadSearch(query)}
           />
         </main>
 

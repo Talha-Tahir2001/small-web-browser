@@ -81,6 +81,25 @@ export function useBrowser() {
     void refresh(personId);
   }, [personId, refresh]);
 
+  /**
+   * Load the results of a search, without recording an arrival.
+   *
+   * This is what makes going back to a search arrival show the results
+   * again: the results are not part of the arrival, so they have to be
+   * fetched when the reader comes back to it.
+   */
+  const loadSearch = useCallback(
+    async (query: string) => {
+      try {
+        const response = await api.search(query);
+        dispatch({ type: 'search/results', response });
+      } catch (error) {
+        report(error);
+      }
+    },
+    [report],
+  );
+
   /** Switch to browsing as somebody else. */
   const choosePerson = useCallback((personId: string) => {
     window.localStorage.setItem(PERSON_KEY, personId);
@@ -269,6 +288,7 @@ export function useBrowser() {
       goToAddress,
       followLink,
       search,
+      loadSearch,
       back,
       forward,
       jump,

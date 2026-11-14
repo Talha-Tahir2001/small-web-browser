@@ -1,11 +1,11 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import type { VisitDto } from '@small-web-browser/shared';
 
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useLinkBridge } from '@/hooks/use-link-bridge';
 import type { SearchResponse } from '@/lib/api';
 
@@ -26,22 +26,35 @@ export function Viewport({
   search,
   onFollowLink,
   onOpenResult,
+  onNeedSearch,
 }: {
   current: VisitDto | null;
   search: SearchResponse | null;
   onFollowLink: (href: string) => void;
   onOpenResult: (address: string) => void;
+  onNeedSearch: (query: string) => void;
 }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
 
   useLinkBridge(frameRef, onFollowLink);
+
+  // Going back to a search arrival has to show the results again: the
+  // results are not part of the arrival, so they are fetched when the reader
+  // comes back to it.
+  const searchQuery = current?.kind === 'search' ? (current.snapshot.query ?? '') : '';
+  const haveResults = search !== null && search.query === searchQuery;
+
+  useEffect(() => {
+    if (!searchQuery || haveResults) return;
+    onNeedSearch(searchQuery);
+  }, [searchQuery, haveResults, onNeedSearch]);
 
   if (!current) {
     return (
       <div className="flex h-full items-center justify-center">
         <Card className="max-w-sm border-dashed shadow-none">
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Nothing open</CardTitle>
+            <h2 className="text-sm leading-none font-medium">Nothing open</h2>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
             Type an address above to start reading, or search for something that is written in a
@@ -99,7 +112,7 @@ function SearchResults({
     return (
       <Card className="m-6 max-w-lg border-dashed shadow-none">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Nothing found</CardTitle>
+          <h2 className="text-sm leading-none font-medium">Nothing found</h2>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
           No page in this web contains “{search.query}”. The search reads what is written in the
@@ -111,16 +124,18 @@ function SearchResults({
 
   return (
     <div className="h-full overflow-y-auto p-6">
-      <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+      <h2 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {search.total} {search.total === 1 ? 'page' : 'pages'} mentioning “{search.query}”
-      </p>
+      </h2>
 
       <ul className="mt-4 space-y-3">
         {search.results.map((result) => (
           <li key={result.address}>
             <Card className="shadow-none transition-colors hover:border-primary/40">
               <CardHeader>
-                <CardTitle className="text-sm font-medium">{result.title}</CardTitle>
+                {/* A real heading: the results are a list of pages, and a
+                    reader should be able to navigate them by heading. */}
+                <h3 className="text-sm leading-none font-medium">{result.title}</h3>
                 <Badge variant="secondary" className="font-mono">
                   {result.address}
                 </Badge>
