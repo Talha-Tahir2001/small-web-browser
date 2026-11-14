@@ -10,8 +10,10 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 
+import type { HistoryListDto } from '@small-web-browser/shared';
+
 import { JumpDto, MoveDto, PersonQueryDto } from './dto/history.dto.js';
-import { HistoryService, type HistoryListDto, type MoveResultDto } from './history.service.js';
+import { HistoryService, type MoveResultDto } from './history.service.js';
 
 @Controller('api/history')
 export class HistoryController {

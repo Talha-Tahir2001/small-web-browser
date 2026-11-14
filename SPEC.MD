@@ -528,9 +528,9 @@ Response headers:
 
 ```
 Content-Type: text/html; charset=utf-8
-Content-Security-Policy: sandbox allow-scripts; default-src 'none'; style-src 'unsafe-inline';
-  img-src data: blob:; font-src data:; base-uri 'none'; form-action 'none';
-  frame-ancestors http://localhost:3000 http://127.0.0.1:3000
+Content-Security-Policy: sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline';
+  style-src 'unsafe-inline'; img-src data: blob:; font-src data:; base-uri 'none';
+  form-action 'none'; frame-ancestors http://localhost:3000 http://127.0.0.1:3000
 X-Content-Type-Options: nosniff
 Referrer-Policy: no-referrer
 Cache-Control: no-store

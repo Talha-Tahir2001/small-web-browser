@@ -4,7 +4,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
 import { back, canGoBack, canGoForward, forward, jump } from '@small-web-browser/shared';
-import type { HistoryEntry, HistoryState, VisitDto } from '@small-web-browser/shared';
+import type {
+  HistoryEntry,
+  HistoryListDto,
+  HistoryListEntryDto,
+  HistoryState,
+  VisitDto,
+} from '@small-web-browser/shared';
 
 import { badRequest } from '../common/errors.js';
 import { toVisitDto } from '../visits/visit.dto.js';
@@ -12,24 +18,6 @@ import { Visit, type VisitDocument } from '../visits/schemas/visit.schema.js';
 import { BrowserStateStore } from './browser-state.store.js';
 import { toHistoryStateDto } from './history-state.dto.js';
 
-/** One row of the history list. */
-export type HistoryListEntryDto = HistoryEntry & {
-  /**
-   * Where this arrival sits in the navigable stack, or null when it has
-   * fallen off the end of it - which is what "lost" means.
-   */
-  stackIndex: number | null;
-};
-
-export type HistoryListDto = {
-  personId: string;
-  cursor: number;
-  canGoBack: boolean;
-  canGoForward: boolean;
-  entries: HistoryListEntryDto[];
-  totalVisits: number;
-  lostCount: number;
-};
 
 export type MoveResultDto = {
   visit: VisitDto;
