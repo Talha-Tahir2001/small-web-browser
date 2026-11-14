@@ -695,6 +695,8 @@ seed needs `dist/` to exist, so a bare `node dist/scripts/seed.js` on a clean ch
 - `--reset` deletes the four collections first, for a clean rebuild.
 - Timestamps are fixed constants derived from a base epoch, with fixed offsets — never `now()`.
   The same command produces the same history at the same times.
+- The seed also creates the indexes, so a web that has been seeded but never opened by the
+  application is already searchable.
 
 ### 7.2 Content
 
