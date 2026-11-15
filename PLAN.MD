@@ -261,6 +261,9 @@ knowingly left out.**
 | 8 | 3:50–4:30 | Split screen / `curl -I` of `/render/:visitId` showing the CSP headers | **Containment:** author HTML never enters the app's DOM. It is served from a different origin, inside a sandboxed frame with no same-origin access, under `default-src 'none'` so it cannot phone home. The cost, stated plainly: authors keep JavaScript but lose storage, cookies, forms and any outbound request. Here is the header that does it. |
 | 9 | 4:30–4:50 | README on screen, run commands | **What was knowingly left out:** no auth, no tabs, no edits, no assets, no real network; search has no fuzzy matching; scroll position is not restored. And the run commands. |
 
+The word-for-word script, the timings, the on-screen actions and a troubleshooting table are in
+`docs/recording-script.md`. It is the same walk, written out to be read aloud.
+
 **Rehearsal note:** rehearse once end-to-end before recording. Seed is deterministic, so the
 exact trail in step 2 exists on every fresh seed — the walk can be walked again.
 

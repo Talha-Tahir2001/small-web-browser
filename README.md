@@ -47,6 +47,11 @@ Open <http://localhost:3000>, pick a name from the list on the right, and start 
 `npm run seed` is safe to run again: the web does not double. Add `-- --reset` to rebuild it from
 nothing.
 
+**The recording.** The narrated walkthrough is scripted beat by beat, word for word, in
+[`docs/recording-script.md`](docs/recording-script.md) — including the exact timings, what to do on
+screen at each moment, the shell command for the containment headers, and a troubleshooting table
+for the things that can go wrong. It lands at about 4:45.
+
 ---
 
 ## What it does

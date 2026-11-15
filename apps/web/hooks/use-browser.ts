@@ -268,7 +268,7 @@ export function useBrowser() {
 
   /** Publish a page, and then arrive at it. */
   const publish = useCallback(
-    async (input: { address: string; title: string; html: string }) => {
+    async (input: { address: string; title: string; html: string; replace: boolean }) => {
       if (!personId) throw new ApiError('Choose a name first.', 0, null);
 
       const site = await api.publish({ ...input, authorId: personId });

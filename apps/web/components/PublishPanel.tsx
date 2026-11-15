@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -32,11 +33,17 @@ export function PublishPanel({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onPublish: (input: { address: string; title: string; html: string }) => Promise<unknown>;
+  onPublish: (input: {
+    address: string;
+    title: string;
+    html: string;
+    replace: boolean;
+  }) => Promise<unknown>;
 }) {
   const [address, setAddress] = useState('');
   const [title, setTitle] = useState('');
   const [html, setHtml] = useState('<h1>My page</h1>\n<p>Written by me.</p>');
+  const [replace, setReplace] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -47,7 +54,7 @@ export function PublishPanel({
     setBusy(true);
 
     try {
-      await onPublish({ address, title, html });
+      await onPublish({ address, title, html, replace });
       onOpenChange(false);
     } catch (caught) {
       if (caught instanceof ApiError) {
@@ -123,6 +130,19 @@ export function PublishPanel({
               The preview is sandboxed exactly as the published page will be.
             </p>
           </div>
+        </div>
+
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="publish-replace"
+            checked={replace}
+            onCheckedChange={(checked) => setReplace(checked === true)}
+            className="mt-0.5"
+          />
+          <Label htmlFor="publish-replace" className="text-xs leading-snug font-normal">
+            Replace the page at this address, if there is already one. The old page is not deleted
+            — every arrival that saw it keeps its own copy.
+          </Label>
         </div>
 
         {error ? (
